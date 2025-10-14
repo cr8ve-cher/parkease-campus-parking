@@ -4,8 +4,6 @@ An intelligent IoT-based parking management solution designed to solve parking c
 🌐 Live Demo
 View Live Application →
 
-Replace YOUR-USERNAME with your actual GitHub username
-
 📱 Features
 Core Functionality
 ✅ Real-time Availability Tracking - Live updates of available parking spots across campus
