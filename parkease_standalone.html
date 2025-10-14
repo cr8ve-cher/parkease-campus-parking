@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ParkEase - Smart Campus Parking</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState } = React;
+
+        // Lucide Icons as SVG components
+        const Camera = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>;
+        const MapPin = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>;
+        const QrCode = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"></rect><rect x="14" y="3" width="7" height="7"></rect><rect x="14" y="14" width="7" height="7"></rect><rect x="3" y="14" width="7" height="7"></rect></svg>;
+        const Lock = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>;
+        const Car = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 11a2 2 0 0 0-2 2v5a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-1h12v1a1 1 0 0 0 1 1h1a1 1 0 0 0 1-1v-5a2 2 0 0 0-2-2"></path><path d="M5 11l2-7h10l2 7"></path><circle cx="9" cy="16" r="1"></circle><circle cx="15" cy="16" r="1"></circle></svg>;
+        const Clock = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>;
+        const CreditCard = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>;
+        const Menu = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>;
+        const Bell = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>;
+        const ChevronRight = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"></polyline></svg>;
+        const Navigation = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>;
+        const Shield = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>;
+        const AlertCircle = () => <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>;
+
+        const ParkingApp = () => {
+            const [currentScreen, setCurrentScreen] = useState('home');
+            const [selectedGate, setSelectedGate] = useState(null);
+            const [bookingConfirmed, setBookingConfirmed] = useState(false);
+
+            const parkingData = [
+                { gate: 'Gate A - Main Entrance', available: 45, total: 120, distance: '200m', zone: 'North' },
+                { gate: 'Gate B - Library Side', available: 12, total: 80, distance: '350m', zone: 'East' },
+                { gate: 'Gate C - Sports Complex', available: 67, total: 100, distance: '500m', zone: 'South' },
+                { gate: 'Gate D - Hostel Block', available: 3, total: 60, distance: '150m', zone: 'West' }
+            ];
+
+            const userVehicle = {
+                number: 'TN 01 AB 1234',
+                model: 'Honda Activa',
+                color: 'Black',
+                rfidStatus: 'Active'
+            };
+
+            const HomeScreen = () => (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+                    <div className="max-w-md mx-auto">
+                        <div className="flex justify-between items-center mb-8">
+                            <div>
+                                <h1 className="text-2xl font-bold text-gray-800">ParkEase</h1>
+                                <p className="text-sm text-gray-600">Smart Campus Parking</p>
+                            </div>
+                            <div className="flex gap-3">
+                                <Bell />
+                                <Menu />
+                            </div>
+                        </div>
+
+                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="text-lg font-semibold text-gray-800">Current Availability</h2>
+                                <div className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">Live</div>
+                            </div>
+                            <div className="text-4xl font-bold text-indigo-600 mb-2">
+                                127 <span className="text-lg font-normal text-gray-600">/ 360 spots</span>
+                            </div>
+                            <div className="flex items-center text-sm text-gray-600">
+                                <Clock />
+                                <span className="ml-1">Updated 2 mins ago</span>
+                            </div>
+                        </div>
+
+                        <div className="mb-6">
+                            <h3 className="text-lg font-semibold text-gray-800 mb-4">Parking by Gate</h3>
+                            <div className="space-y-3">
+                                {parkingData.map((gate, idx) => (
+                                    <div 
+                                        key={idx}
+                                        onClick={() => {
+                                            setSelectedGate(gate);
+                                            setCurrentScreen('gateDetail');
+                                        }}
+                                        className="bg-white rounded-xl shadow-md p-4 cursor-pointer hover:shadow-lg transition-shadow"
+                                    >
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex-1">
+                                                <h4 className="font-semibold text-gray-800">{gate.gate}</h4>
+                                                <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+                                                    <span className="flex items-center">
+                                                        <MapPin />
+                                                        <span className="ml-1">{gate.distance}</span>
+                                                    </span>
+                                                    <span className="text-gray-400">|</span>
+                                                    <span>{gate.zone} Zone</span>
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className={`text-2xl font-bold ${gate.available < 20 ? 'text-red-500' : 'text-green-500'}`}>
+                                                    {gate.available}
+                                                </div>
+                                                <div className="text-xs text-gray-500">available</div>
+                                            </div>
+                                            <ChevronRight />
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mb-6">
+                            <button onClick={() => setCurrentScreen('map')} className="bg-indigo-600 text-white rounded-xl p-4 shadow-lg hover:bg-indigo-700 transition-colors">
+                                <MapPin />
+                                <span className="text-sm font-medium block mt-2">Find Parking</span>
+                            </button>
+                            <button onClick={() => setCurrentScreen('vehicle')} className="bg-white text-gray-800 rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow">
+                                <Car />
+                                <span className="text-sm font-medium block mt-2">My Vehicle</span>
+                            </button>
+                            <button onClick={() => setCurrentScreen('helmet')} className="bg-white text-gray-800 rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow">
+                                <Lock />
+                                <span className="text-sm font-medium block mt-2">Helmet Locker</span>
+                            </button>
+                            <button onClick={() => setCurrentScreen('payment')} className="bg-white text-gray-800 rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow">
+                                <CreditCard />
+                                <span className="text-sm font-medium block mt-2">Payments</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const GateDetailScreen = () => (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+                    <div className="max-w-md mx-auto">
+                        <button onClick={() => setCurrentScreen('home')} className="mb-4 text-indigo-600 font-medium">← Back</button>
+                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">{selectedGate?.gate}</h2>
+                            <div className="flex items-center text-gray-600 mb-6">
+                                <MapPin />
+                                <span className="ml-2">{selectedGate?.distance} from your location</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                <div className="bg-green-50 rounded-xl p-4">
+                                    <div className="text-3xl font-bold text-green-600">{selectedGate?.available}</div>
+                                    <div className="text-sm text-gray-600">Available</div>
+                                </div>
+                                <div className="bg-gray-50 rounded-xl p-4">
+                                    <div className="text-3xl font-bold text-gray-600">{selectedGate?.total}</div>
+                                    <div className="text-sm text-gray-600">Total Spots</div>
+                                </div>
+                            </div>
+                            <button onClick={() => { setBookingConfirmed(true); setCurrentScreen('booking'); }} className="w-full bg-indigo-600 text-white rounded-xl py-4 font-semibold hover:bg-indigo-700 transition-colors shadow-lg">
+                                Book Parking Spot
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const BookingScreen = () => (
+                <div className="min-h-screen bg-gradient-to-br from-green-50 to-emerald-100 p-6">
+                    <div className="max-w-md mx-auto">
+                        <div className="text-center mb-8">
+                            <div className="w-20 h-20 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <svg className="w-10 h-10 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-2">Booking Confirmed!</h2>
+                            <p className="text-gray-600">Your parking spot is reserved</p>
+                        </div>
+                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                            <div className="text-center mb-6">
+                                <div className="bg-gray-800 inline-block p-4 rounded-2xl">
+                                    <QrCode />
+                                </div>
+                                <p className="text-sm text-gray-600 mt-4">Scan this QR code at the gate</p>
+                            </div>
+                            <div className="space-y-4 border-t pt-4">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Gate</span>
+                                    <span className="font-semibold text-gray-800">{selectedGate?.gate}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Spot Number</span>
+                                    <span className="font-semibold text-gray-800">A-23</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Parking Fee</span>
+                                    <span className="font-semibold text-green-600">₹10</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onClick={() => { setBookingConfirmed(false); setCurrentScreen('home'); }} className="w-full bg-white text-gray-800 rounded-xl py-4 font-semibold hover:shadow-lg transition-shadow">
+                            Back to Home
+                        </button>
+                    </div>
+                </div>
+            );
+
+            const VehicleScreen = () => (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+                    <div className="max-w-md mx-auto">
+                        <button onClick={() => setCurrentScreen('home')} className="mb-4 text-indigo-600 font-medium">← Back</button>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6">My Vehicle</h2>
+                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                            <div className="flex items-center justify-between mb-6">
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-800">{userVehicle.model}</h3>
+                                    <p className="text-gray-600">{userVehicle.number}</p>
+                                </div>
+                                <Car />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const HelmetLockerScreen = () => (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+                    <div className="max-w-md mx-auto">
+                        <button onClick={() => setCurrentScreen('home')} className="mb-4 text-indigo-600 font-medium">← Back</button>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6">Helmet Locker</h2>
+                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                            <div className="text-center mb-6">
+                                <div className="w-20 h-20 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <Lock />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-800 mb-2">No Active Deposit</h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const PaymentScreen = () => (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+                    <div className="max-w-md mx-auto">
+                        <button onClick={() => setCurrentScreen('home')} className="mb-4 text-indigo-600 font-medium">← Back</button>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6">Payments</h2>
+                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                            <div className="flex justify-between items-center mb-6">
+                                <div>
+                                    <p className="text-sm text-gray-600">Wallet Balance</p>
+                                    <p className="text-3xl font-bold text-gray-800">₹450</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const MapScreen = () => (
+                <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+                    <div className="max-w-md mx-auto">
+                        <button onClick={() => setCurrentScreen('home')} className="mb-4 text-indigo-600 font-medium">← Back</button>
+                        <h2 className="text-2xl font-bold text-gray-800 mb-6">Campus Parking Map</h2>
+                        <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
+                            <div className="bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl h-96 flex items-center justify-center">
+                                <div className="text-center">
+                                    <MapPin />
+                                    <p className="text-gray-700 font-medium mt-4">Interactive Campus Map</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+
+            const renderScreen = () => {
+                switch(currentScreen) {
+                    case 'home': return <HomeScreen />;
+                    case 'gateDetail': return <GateDetailScreen />;
+                    case 'booking': return <BookingScreen />;
+                    case 'vehicle': return <VehicleScreen />;
+                    case 'helmet': return <HelmetLockerScreen />;
+                    case 'payment': return <PaymentScreen />;
+                    case 'map': return <MapScreen />;
+                    default: return <HomeScreen />;
+                }
+            };
+
+            return (
+                <div className="font-sans relative">
+                    {renderScreen()}
+                    <div className="fixed bottom-4 right-4 text-xs text-gray-400 bg-gray-900 bg-opacity-90 px-4 py-3 rounded-lg border border-gray-700 z-50">
+                        <div className="font-semibold text-gray-300">Created by: The Ide4tors</div>
+                        <div className="text-gray-400">II ECE A (Batch of 24-28)</div>
+                        <div className="text-gray-400">SRMIST KTR</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<ParkingApp />);
+    </script>
+</body>
+</html>
