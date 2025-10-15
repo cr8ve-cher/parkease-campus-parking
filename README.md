@@ -59,7 +59,7 @@ Navigate to your assigned parking spot
 For Developers
 Clone Repository
 bash
-git clone https://github.com/YOUR-USERNAME/parkease-campus-parking.git
+git clone https://github.com/cr8ve-cher/parkease-campus-parking.git
 cd parkease-campus-parking
 Local Development
 Simply open index.html in your browser - no build process needed!
